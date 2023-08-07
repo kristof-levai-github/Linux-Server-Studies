@@ -1,0 +1,146 @@
+# Frissítsük a rendszerünket:
+apt-get update
+
+# Telepítsük a Samba kiszolgálót:
+apt-get install samba
+
+# systemctl stop nmbd.service
+# systemctl disable nmbd.service
+
+# Állítsuk le a Samba kiszolgáló folyamatát:
+systemctl stop smbd.service
+
+#archiváljuk az eredeti konfigot:
+mv /etc/samba/smb.conf /etc/samba/smb.conf.orig
+
+#ellenőrizzük a hálózati interfészeket:
+ip link
+
+# Hozzuk létre a Samba munkakönyvtárát:
+mkdir /samba/					#/srv/samba/share sszabvány szerint itt a helye!
+chown :sambashare /samba/
+
+
+mkdir /samba/david
+adduser --home /samba/david --no-create-home --shell /usr/sbin/nologin --ingroup sambashare david
+chown david:sambashare /samba/david/
+chmod 2770 /samba/david/
+smbpasswd -a david
+smbpasswd -e david
+
+mkdir /samba/mike
+adduser --home /samba/mike --no-create-home --shell /usr/sbin/nologin --ingroup sambashare mike
+chown mike:sambashare /samba/mike/
+chmod 2770 /samba/mike/
+smbpasswd -a mike
+smbpasswd -e mike
+
+mkdir /samba/jane
+adduser --home /samba/jane --no-create-home --shell /usr/sbin/nologin --ingroup sambashare jane
+chown jane:sambashare /samba/jane/
+chmod 2770 /samba/jane/
+smbpasswd -a jane
+smbpasswd -e jane
+
+mkdir /samba/lucy
+adduser --home /samba/lucy --no-create-home --shell /usr/sbin/nologin --ingroup sambashare lucy
+chown david:sambashare /samba/lucy/
+chmod 2770 /samba/lucy/
+smbpasswd -a lucy
+smbpasswd -e lucy
+
+mkdir /samba/everyone
+adduser --home /samba/everyone --no-create-home --shell /usr/sbin/nologin --ingroup sambashare admin
+chown admin:sambashare /samba/everyone/
+chmod 2770 /samba/everyone/
+smbpasswd -a admin
+smbpasswd -e admin
+
+groupadd admins
+usermod -G admins admin
+
+# szerkesszük:
+nano /etc/samba/smb.conf
+
+# tartalma ez legyen:
+[global]
+        server string = samba_server
+        server role = standalone server
+        interfaces = lo enp0s3			# lo: localhost , enp0s3: eth
+        bind interfaces only = yes
+        disable netbios = yes
+        smb ports = 445
+        log file = /var/log/samba/smb.log
+        max log size = 10000
+#	log level = 3 passdb:5 auth:5		# részletesebb naplózás!
+
+[david]
+        path = /samba/david
+        browseable = no
+        read only = no
+        force create mode = 0660
+        force directory mode = 2770
+        valid users = david @admins
+		
+[mike]
+        path = /samba/mike
+        browseable = no
+        read only = no
+        force create mode = 0660
+        force directory mode = 2770
+        valid users = mike @admins
+
+[jane]
+        path = /samba/jane
+        browseable = no
+        read only = no
+        force create mode = 0660
+        force directory mode = 2770
+        valid users = jane @admins
+
+[lucy]
+        path = /samba/lucy
+        browseable = no
+        read only = no
+        force create mode = 0660
+        force directory mode = 2770
+        valid users = lucy @admins
+
+[everyone]
+        path = /samba/everyone
+        browseable = yes
+        read only = no
+        force create mode = 0660
+        force directory mode = 2770
+        valid users = @sambashare @admins
+
+# teszteljünk:
+testparm
+
+# samba start:
+systemctl start smbd.service
+
+
+---
+
+
+Windows 10 — Command Line
+Mounting a Samba share from the Windows command line only requires a single command:
+	
+	net use drive_letter \\your_samba_hostname_or_server_ip\share
+
+Substitute the variables from user david’s share and set the drive letter to X::
+
+	net use X: \\192.168.10.4\david
+	net use X: \\samba.teszt.local\david
+	
+When this command is entered you will be prompted for david’s username and password. 
+After entering these, you will receive an acknowledgment that the share was successfully mounted:
+	Output
+		Enter the user name for 'samba.example.com': david
+		Enter the password for samba.example.com:
+		The command completed successfully.
+
+You will now be able to browse the Samba share in File Explorer 
+and manipulate the files and directories as if they were local to your computer.
+

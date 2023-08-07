@@ -1,0 +1,13 @@
+Edit the ~/.bashrc (recommended) 			#or ~/.bash_aliases file 
+
+	using a text editor: nano ~/.bashrc	 	# or ~/.bash_aliases
+
+Append your bash alias. For example append: 
+	
+	alias cls='clear'
+
+Save and close the file.
+
+Activate alias by typing the following source command: 
+
+	source ~/.bashrc
