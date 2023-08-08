@@ -1,0 +1,1 @@
+Where printf"---" dont work modify it to echo, in some distributions it gets confused as a flag/switch.
